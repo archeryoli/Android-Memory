@@ -8,10 +8,12 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.widget.TextView;
 
 import com.example.memory.Models.Card;
 import com.example.memory.Models.Playground;
 import com.example.memory.Models.Position;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,9 +89,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
-    private void generateAndAddRows(int nrCols, int nrRows){
-
-    }
     private ImageButton generateButton(Position pos){
         ImageButton ib = new ImageButton(this);
         //ib.setTranslationX(pos.y * 50);
@@ -101,13 +100,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ImageButton b = (ImageButton) view;
         Position c = (Position) b.getTag();
         b.setImageResource(getPicsArray()[field.getCard(c).getValue()]);
+        field.play(c);
+        if(!field.getCard(c).getIsVisible()) return;
         if(previousCard.equals(new Position(-1, -1))){
             previousCard = c;
         } else {
-            closeCards(previousCard, c);
+            closeCards(previousCard, c, view);
             previousCard = new Position(-1, -1);
         }
     }
+
     public static int[] getPicsArray() {
         int[] c = new int[20];
 
@@ -134,22 +136,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return c;
     }
 
-
-    private void closeCards(Position pos1, Position pos2)
+    private void closeCards(Position pos1, Position pos2, View view)
     {
-        class CloseTask extends TimerTask
-        {
-            @Override
-            public void run() {
-                runOnUiThread(() -> {
-                    buttons[pos1.y][pos1.x].setImageResource(R.drawable.back);
-                    buttons[pos2.y][pos2.x].setImageResource(R.drawable.back);
-                });
+        if(field.isPair(pos1, pos2)){
+            field.setScore(field.getScore(field.getIsWhosOnTurn()) + 1, field.getIsWhosOnTurn());
+
+            TextView t1 = findViewById(R.id.scorePlayer1);
+            t1.setText(String.valueOf(field.getScore(false)));
+            TextView t2 = findViewById(R.id.scorePlayer2);
+            t2.setText(String.valueOf(field.getScore(true)));
+
+            if(field.finished()){
+                Snackbar.make(view, "GameIsFinished", Snackbar.LENGTH_LONG).show();
             }
+
+        } else {
+            class CloseTask extends TimerTask
+            {
+                @Override
+                public void run() {
+                    runOnUiThread(() -> {
+                        buttons[pos1.x][pos1.y].setImageResource(R.drawable.back);
+                        buttons[pos2.x][pos2.y].setImageResource(R.drawable.back);
+                    });
+                }
+            }
+
+            Timer timer = new Timer();
+            timer.schedule(new CloseTask(),1000);
+            field.setIsWhosOnTurn(!field.getIsWhosOnTurn());
         }
 
-        Timer timer = new Timer();
-        timer.schedule(new CloseTask(),1000);
     }
 
 }

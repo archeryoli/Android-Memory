@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Memory</string>
+    <string name="player1">Spieler1</string>
+    <string name="player2">Spieler2</string>
 </resources>
